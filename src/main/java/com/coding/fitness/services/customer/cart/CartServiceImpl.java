@@ -155,10 +155,29 @@ public class CartServiceImpl implements CartService{
 
         // Get the user's cart items that are not yet part of an order
         List<CartItems> cartItems = cartItemRepository.findByUserIdAndOrderIsNull(placeOrderDTO.getUserId());
-
+        //findByCode is changed from Optional to object of coupon
+        //to allow placing order without forcing passing a code for a coupon
+        Coupon coupon = couponRepository.findByCode(placeOrderDTO.getCouponCode());
         if (cartItems.isEmpty()) {
             throw new RuntimeException("Cart is empty");
         }
+
+        // Calculate total amount
+        Long totalAmount = cartItems.stream()
+                .mapToLong(item -> item.getPrice() * item.getQuantity())
+                .sum();
+
+        //Calculate the Amount
+        Long amount = cartItems.stream()
+                .mapToLong(CartItems::getQuantity)
+                .sum();
+
+        //apply coupon if provided and update the totalAmount
+        if(!placeOrderDTO.getCouponCode().isBlank()){
+            OrderSummary orderSummary = applyCoupon(placeOrderDTO.getUserId(), placeOrderDTO.getCouponCode());
+            totalAmount = orderSummary.getTotalPrice();
+        }
+
 
         // Create new order
         Order order = new Order();
@@ -168,20 +187,11 @@ public class CartServiceImpl implements CartService{
         order.setAddress(placeOrderDTO.getAddress());
         order.setOrderStatus(OrderStatus.PLACED);
         order.setTrackingId(UUID.randomUUID());
-
-        // Calculate total amount
-        Long totalAmount = cartItems.stream()
-                .mapToLong(item -> item.getPrice() * item.getQuantity())
-                .sum();
         order.setTotalAmount(totalAmount);
-
-        //Calculate the Amount
-        Long amount = cartItems.stream()
-                .mapToLong(CartItems::getQuantity)
-                .sum();
         order.setAmount(amount);
+        order.setCoupon(coupon);
 
-        // Save order
+        // Save the order
         order = orderRepository.save(order);
 
         // Associate cart items with the order
@@ -217,8 +227,8 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public OrderSummary applyCoupon(Long userId, String code) {
-        Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(()-> new ValidationException("Coupon Not Found"));
+        Coupon coupon = couponRepository.findByCode(code);
+
         if(IsCouponExpired(coupon)){
             throw new ValidationException("Coupon Is Expired");
         }
@@ -239,11 +249,6 @@ public class CartServiceImpl implements CartService{
 
         return expirationDate != null && currentDate.after(expirationDate);
     }
-
-
-
-
-
 
 
 }

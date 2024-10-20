@@ -1,6 +1,7 @@
 package com.coding.fitness.dtos;
 
 import com.coding.fitness.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ public class OrderDTO {
 
     private String userName;
 
- private List<CartItemsDTO> cartItems = new ArrayList<>();
+    //to prevent serializing the cartItems into JSON when the OrderDTO is serialized
+    @JsonBackReference
+    private List<CartItemsDTO> cartItems = new ArrayList<>();
 
 }

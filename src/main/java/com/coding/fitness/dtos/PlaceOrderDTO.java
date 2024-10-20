@@ -10,4 +10,6 @@ public class PlaceOrderDTO {
 
     private String orderDescription;
 
+    private String couponCode;
+
 }
