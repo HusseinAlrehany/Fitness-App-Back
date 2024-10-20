@@ -61,14 +61,8 @@ public class CartController {
     }
 
     @GetMapping("/coupon/{userId}/{code}")
-    public ResponseEntity<?> applyCoupon(@PathVariable Long userId, @PathVariable String code){
-        try{
-            OrderSummary orderSummary = cartService.applyCoupon(userId, code);
-            return ResponseEntity.ok(orderSummary);
+    public ResponseEntity<OrderSummary> applyCoupon(@PathVariable Long userId, @PathVariable String code){
 
-        }catch(ValidationException ex){
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                    .body(ex.getMessage());
-        }
+        return ResponseEntity.ok(cartService.applyCoupon(userId, code));
     }
 }
