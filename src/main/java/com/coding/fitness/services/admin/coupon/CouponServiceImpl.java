@@ -6,6 +6,7 @@ import com.coding.fitness.entity.Coupon;
 import com.coding.fitness.entity.User;
 import com.coding.fitness.enums.UserRole;
 import com.coding.fitness.exceptions.ValidationException;
+import com.coding.fitness.mapper.Mapper;
 import com.coding.fitness.repository.CouponRepository;
 import com.coding.fitness.services.customer.cart.CartService;
 import com.coding.fitness.tokens.utils.JwtUtils;
@@ -24,8 +25,8 @@ public class CouponServiceImpl implements  CouponService{
 
     private final CouponRepository couponRepository;
 
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final Mapper mapper;
+    private final JwtUtils jwtUtils;
 
     @Override
     public Coupon createCoupon(CouponDTO couponDTO) {
@@ -35,11 +36,8 @@ public class CouponServiceImpl implements  CouponService{
         //new update to prevent the JWT for a customer to create a coupon
         User user = jwtUtils.getLoggedInUser();
         if(user.getRole() == UserRole.ADMIN) {
-            Coupon coupon = new Coupon();
-            coupon.setName(couponDTO.getName());
-            coupon.setCode(couponDTO.getCode());
-            coupon.setDiscount(couponDTO.getDiscount());
-            coupon.setExpirationDate(couponDTO.getExpirationDate());
+            //map couponDTO to Coupon entity
+            Coupon coupon = mapper.getCoupon(couponDTO);
             return couponRepository.save(coupon);
         } else {
             throw new ValidationException("Not Authorized");
@@ -54,12 +52,8 @@ public class CouponServiceImpl implements  CouponService{
             throw new ValidationException("Not Authorized User");
         }
         return couponRepository.findAll().stream()
-                .map(Coupon::getCouponDTO)
+                .map(mapper::getCouponDTO)
                 .collect(Collectors.toList());
     }
-
-
-    //should move to cart service impl
-
 
 }

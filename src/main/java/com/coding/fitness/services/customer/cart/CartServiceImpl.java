@@ -3,6 +3,7 @@ import com.coding.fitness.dtos.*;
 import com.coding.fitness.entity.*;
 import com.coding.fitness.enums.OrderStatus;
 import com.coding.fitness.exceptions.ValidationException;
+import com.coding.fitness.mapper.Mapper;
 import com.coding.fitness.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,9 @@ public class CartServiceImpl implements CartService{
 
     @Autowired
     private CouponRepository couponRepository;
+
+    @Autowired
+    private Mapper mapper;
 
     @Override
     public ResponseEntity<?> addProductToCart(AddProductInCartDTO addProductInCartDTO) {
@@ -59,6 +63,7 @@ public class CartServiceImpl implements CartService{
             newCartItem.setUser(user);
             newCartItem.setQuantity(1L);
             newCartItem.setPrice(product.getPrice());
+            newCartItem.setOrderStatus(OrderStatus.PENDING);
 
        return ResponseEntity.status(HttpStatus.CREATED)
                .body(cartItemRepository.save(newCartItem));
@@ -68,7 +73,7 @@ public class CartServiceImpl implements CartService{
     public List<CartItemsDTO> getCartByUserId(Long userId) {
         return cartItemRepository.findByUserIdAndOrderIsNull(userId)
                 .stream()
-                .map(CartItems::getCartDTO)
+                .map(mapper::getCartDTO)
                 .collect(Collectors.toList());
     }
 
@@ -129,7 +134,7 @@ public class CartServiceImpl implements CartService{
         CartItems savedCartItems = cartItemRepository.save(cartItems);
 
 
-        return savedCartItems.getCartDTO();
+        return mapper.getCartDTO(cartItems);
     }
 
     @Override
@@ -143,7 +148,7 @@ public class CartServiceImpl implements CartService{
         }
         cartItems.setQuantity(cartItems.getQuantity() - 1);
               CartItems savedCartItems = cartItemRepository.save(cartItems);
-        return savedCartItems.getCartDTO();
+        return mapper.getCartDTO(cartItems);
     }
 
 
@@ -155,9 +160,10 @@ public class CartServiceImpl implements CartService{
 
         // Get the user's cart items that are not yet part of an order
         List<CartItems> cartItems = cartItemRepository.findByUserIdAndOrderIsNull(placeOrderDTO.getUserId());
-        //findByCode is changed from Optional to object of coupon
+        //findByCode is Optional of coupon(orElse(null))
         //to allow placing order without forcing passing a code for a coupon
-        Coupon coupon = couponRepository.findByCode(placeOrderDTO.getCouponCode());
+        Coupon coupon = couponRepository.findByCode(placeOrderDTO.getCouponCode())
+                .orElse(null);
         if (cartItems.isEmpty()) {
             throw new RuntimeException("Cart is empty");
         }
@@ -173,7 +179,7 @@ public class CartServiceImpl implements CartService{
                 .sum();
 
         //apply coupon if provided and update the totalAmount
-        if(!placeOrderDTO.getCouponCode().isBlank()){
+        if(placeOrderDTO.getCouponCode() != null && !placeOrderDTO.getCouponCode().isEmpty()){
             OrderSummary orderSummary = applyCoupon(placeOrderDTO.getUserId(), placeOrderDTO.getCouponCode());
             totalAmount = orderSummary.getTotalPrice();
         }
@@ -190,7 +196,9 @@ public class CartServiceImpl implements CartService{
         order.setTotalAmount(totalAmount);
         order.setAmount(amount);
         order.setCoupon(coupon);
-
+        if(coupon != null) {
+            order.setDiscount(coupon.getDiscount());
+        }
         // Save the order
         order = orderRepository.save(order);
 
@@ -203,9 +211,7 @@ public class CartServiceImpl implements CartService{
         }
 
         // Create OrderDTO
-        OrderDTO orderDTO = order.getOrderDTO();
-
-
+        OrderDTO orderDTO = mapper.getOrderDTO(order);
         // Add cart items to the response
         List<CartItemsDTO> cartItemDTOs = cartItems.stream().map(item -> {
             CartItemsDTO dto = new CartItemsDTO();
@@ -227,17 +233,22 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public OrderSummary applyCoupon(Long userId, String code) {
-        Coupon coupon = couponRepository.findByCode(code);
+        Optional.ofNullable(userId)
+                .filter(id-> id > 0 )
+                .orElseThrow(()-> new ValidationException("Invalid id"));
 
-        if(IsCouponExpired(coupon)){
+        Coupon coupon = couponRepository.findByCode(code.trim())
+                .orElseThrow(() -> new ValidationException("Invalid Code"));
+        if(IsCouponExpired(coupon)&& coupon!= null){
             throw new ValidationException("Coupon Is Expired");
         }
         OrderSummary orderSummary = getOrderSummary(userId);
-        double discountAmount = ((coupon.getDiscount() / 100.0) * orderSummary.getTotalPrice());
-        double netAmount = orderSummary.getTotalPrice() - discountAmount;
-        orderSummary.setTotalPrice((long)netAmount);
-        orderSummary.setSubTotal((long)netAmount);
-
+        if(coupon != null){
+            double discountAmount = ((coupon.getDiscount() / 100.0) * orderSummary.getTotalPrice());
+            double netAmount = orderSummary.getTotalPrice() - discountAmount;
+            orderSummary.setTotalPrice((long)netAmount);
+            orderSummary.setSubTotal((long)netAmount);
+        }
         return orderSummary;
     }
 
@@ -245,11 +256,11 @@ public class CartServiceImpl implements CartService{
     @Override
     public boolean IsCouponExpired(Coupon coupon) {
         Date currentDate = new Date();
-        Date expirationDate = coupon.getExpirationDate();
-
-        return expirationDate != null && currentDate.after(expirationDate);
+        if(coupon != null){
+           return coupon.getExpirationDate() != null && currentDate.after(coupon.getExpirationDate());
+        }
+        return false;
     }
-
 
 }
 

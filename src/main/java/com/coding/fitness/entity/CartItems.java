@@ -1,6 +1,7 @@
 package com.coding.fitness.entity;
 
 import com.coding.fitness.dtos.CartItemsDTO;
+import com.coding.fitness.enums.OrderStatus;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -20,6 +21,10 @@ public class CartItems {
 
     private Long quantity;
 
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -36,19 +41,5 @@ public class CartItems {
     @JoinColumn(name = "order_id")
     private Order order;
 
-
-    // convert cart items to cartItems DTO
-
-    public CartItemsDTO getCartDTO(){
-         CartItemsDTO cartItemsDTO = new CartItemsDTO();
-         cartItemsDTO.setId(id);
-         cartItemsDTO.setQuantity(quantity);
-         cartItemsDTO.setPrice(price);
-         cartItemsDTO.setProductName(product.getName());
-         cartItemsDTO.setReturnedImg(product.getImg());
-         cartItemsDTO.setProductId(product.getId());
-
-         return cartItemsDTO;
-    }
 
 }

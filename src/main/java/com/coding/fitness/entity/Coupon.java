@@ -23,15 +23,4 @@ public class Coupon {
     private Long discount;
     private Date expirationDate;
 
-    public CouponDTO getCouponDTO(){
-        CouponDTO couponDTO = new CouponDTO();
-        couponDTO.setId(id);
-        couponDTO.setCode(code);
-        couponDTO.setName(name);
-        couponDTO.setDiscount(discount);
-        couponDTO.setExpirationDate(expirationDate);
-
-        return couponDTO;
-    }
-
 }

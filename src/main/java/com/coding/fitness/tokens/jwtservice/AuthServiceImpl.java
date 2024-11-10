@@ -6,6 +6,7 @@ import com.coding.fitness.entity.Order;
 import com.coding.fitness.entity.User;
 import com.coding.fitness.enums.OrderStatus;
 import com.coding.fitness.enums.UserRole;
+import com.coding.fitness.mapper.Mapper;
 import com.coding.fitness.repository.OrderRepository;
 import com.coding.fitness.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -22,6 +23,8 @@ public class AuthServiceImpl implements AuthService{
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private Mapper mapper;
 
     //to create admin account
     @PostConstruct
@@ -57,7 +60,7 @@ public class AuthServiceImpl implements AuthService{
         order.setOrderStatus(OrderStatus.PENDING);
 
         orderRepository.save(order);
-        return dbUser.getUserDTO();
+        return mapper.getUserDTO(dbUser);
     }
 
     @Override

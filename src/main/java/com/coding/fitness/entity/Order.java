@@ -6,11 +6,10 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "orders")
@@ -31,6 +30,7 @@ public class Order {
 
     private String payment;
 
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
     private Long totalAmount;
@@ -46,29 +46,11 @@ public class Order {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CartItems> cartItems;
 
     @OneToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "coupon_id", referencedColumnName = "id")
     private Coupon coupon;
-
-   //convert order to order DTO
-   public OrderDTO getOrderDTO(){
-       OrderDTO orderDTO = new OrderDTO();
-       orderDTO.setId(id);
-       orderDTO.setOrderDescription(orderDescription);
-       orderDTO.setOrderStatus(orderStatus);
-       orderDTO.setAmount(amount);
-       orderDTO.setTotalAmount(totalAmount);
-       orderDTO.setDate(date);
-       orderDTO.setAddress(address);
-       orderDTO.setTrackingId(trackingId);
-       orderDTO.setUserName(user.getName());
-       orderDTO.setUserId(user.getId());
-
-       return orderDTO;
-
-   }
 
 }

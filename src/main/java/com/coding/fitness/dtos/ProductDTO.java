@@ -20,8 +20,6 @@ public class ProductDTO {
 
     //to link the product to the category
     private Long categoryId;
-
-
     private String categoryName;
 
     //to get the image as multipart from the front end

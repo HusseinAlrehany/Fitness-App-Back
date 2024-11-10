@@ -61,19 +61,4 @@ public class User implements UserDetails {
         return true;
     }
 
-
-    public UserDTO getUserDTO(){
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(id);
-        userDTO.setName(name);
-        userDTO.setEmail(email);
-        userDTO.setUserRole(role);
-
-        return userDTO;
-    }
-
-    //new update
-
-
-
 }

@@ -44,5 +44,10 @@ public class ProductController {
          productService.deleteProduct(productId);
        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
+    @PutMapping("/product")
+    public ResponseEntity<ProductDTO> updateProduct(@ModelAttribute ProductDTO productDTO) {
+
+        return ResponseEntity.ok(productService.updateProduct(productDTO));
+    }
 
 }

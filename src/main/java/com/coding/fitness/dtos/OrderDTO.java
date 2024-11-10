@@ -2,6 +2,7 @@ package com.coding.fitness.dtos;
 
 import com.coding.fitness.enums.OrderStatus;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Data
+//@Builder
 public class OrderDTO {
 
    private Long userId;

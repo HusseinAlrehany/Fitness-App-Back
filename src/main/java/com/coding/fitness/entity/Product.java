@@ -31,19 +31,4 @@ public class Product {
     @JsonIgnore
     private Category category;
 
-
-
-    //convert the Product to ProductDTO
-    public ProductDTO getProductDTO(){
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setId(id);
-        productDTO.setName(name);
-        productDTO.setDescription(description);
-        productDTO.setPrice(price);
-        productDTO.setCategoryId(category.getId());
-        productDTO.setByteImg(img);
-        productDTO.setCategoryName(category.getName());
-
-        return productDTO;
-    }
 }

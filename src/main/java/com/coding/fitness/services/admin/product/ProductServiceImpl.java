@@ -3,6 +3,9 @@ package com.coding.fitness.services.admin.product;
 import com.coding.fitness.dtos.ProductDTO;
 import com.coding.fitness.entity.Category;
 import com.coding.fitness.entity.Product;
+import com.coding.fitness.exceptions.ProcessingImgException;
+import com.coding.fitness.exceptions.ValidationException;
+import com.coding.fitness.mapper.Mapper;
 import com.coding.fitness.repository.CategoryRepository;
 import com.coding.fitness.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,46 +23,88 @@ public class ProductServiceImpl implements ProductService{
     private final ProductRepository productRepository;
 
     private final CategoryRepository categoryRepository;
+
+    private final Mapper mapper;
     @Override
-    public ProductDTO addProduct(ProductDTO productDTO) throws IOException {
+    public ProductDTO addProduct(ProductDTO productDTO) {
 
        Product product = new Product();
        product.setName(productDTO.getName());
        product.setDescription(productDTO.getDescription());
        product.setPrice(productDTO.getPrice());
-       product.setImg(productDTO.getImg().getBytes());
+       try {
+           product.setImg(productDTO.getImg().getBytes());
 
-       Category category = categoryRepository.findById(productDTO.getCategoryId()).orElseThrow();
+       }catch (IOException ex){
+           throw new ProcessingImgException("Error Process Img");
+       }
 
-       product.setCategory(category);
-        return productRepository.save(product).getProductDTO();
+       Category category = categoryRepository.findById(productDTO.getCategoryId()).orElseThrow(
+               ()-> new ValidationException("No Category found")
+       );
+
+          product.setCategory(category);
+        Product dbProduct = productRepository.save(product);
+        return mapper.getProductDTO(dbProduct);
     }
 
     @Override
     public List<ProductDTO> findAll() {
-        return productRepository.findAll()
+        List<Product> productList = Optional.of(productRepository.findAll())
+                .filter(products-> !products.isEmpty())
+                .orElseThrow(()-> new ValidationException("No Products Found"));
+        return  productList
                 .stream()
-                .map(Product::getProductDTO)
+                .map(mapper::getProductDTO)
                 .collect(Collectors.toList());
 
     }
 
     @Override
     public List<ProductDTO> findAllProductsByName(String name) {
-        return productRepository.findAllByNameContaining(name)
+           List<Product> productsList = Optional.of(productRepository.findAllByNameContaining(name))
+                   .filter(products -> !products.isEmpty())
+                   .orElseThrow(()-> new ValidationException("OOPS! No Products Found"));
+
+        return productsList
                 .stream()
-                .map(Product::getProductDTO)
+                .map(mapper::getProductDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public void deleteProduct(Long productId) {
-        Optional<Product> optionalProduct = productRepository.findById(productId);
-        if(optionalProduct.isPresent()){
-            productRepository.deleteById(productId);
+        Product product = Optional.ofNullable(productId)
+                .flatMap(productRepository::findById)
+                .orElseThrow(()-> new ValidationException("Product Not Found"));
+        productRepository.deleteById(productId);
+    }
+
+    @Override
+    public ProductDTO updateProduct(ProductDTO productDTO) {
+        Optional.ofNullable(productDTO.getId())
+                .filter(id -> id > 0)
+                .orElseThrow(()-> new ValidationException("Invalid Id"));
+        Product product = productRepository.findById(productDTO.getId())
+                .orElseThrow(()-> new ValidationException("No Product Found"));
+        Category category = categoryRepository.findById(productDTO.getCategoryId())
+                .orElseThrow(()-> new ValidationException("No category found"));
+        Optional.ofNullable(productDTO.getImg())
+                 .filter(img-> !img.isEmpty())
+                 .orElseThrow(()-> new ValidationException("No Img Found"));
+
+        product.setId(productDTO.getId());
+        product.setName(productDTO.getName());
+        product.setPrice(productDTO.getPrice());
+        product.setDescription(productDTO.getDescription());
+        try{
+            product.setImg(productDTO.getImg().getBytes());
+
+        }catch(IOException ex){
+            throw new ProcessingImgException("Error Processing The Img");
         }
-        else {
-            throw new RuntimeException("Product Not Found");
-        }
+        product.setCategory(category);
+        Product dbProduct = productRepository.save(product);
+        return mapper.getProductDTO(dbProduct);
     }
 }

@@ -19,4 +19,9 @@ public class ExceptionHandler {
         return new ResponseEntity<Object>(new ErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), LocalDateTime.now()), HttpStatus.NOT_FOUND);
 
     }
+    @org.springframework.web.bind.annotation.ExceptionHandler(ProcessingImgException.class)
+    public ResponseEntity<Object> errorProcessingImgExceptionHandler(ValidationException ex){
+        return new ResponseEntity<Object>(new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), LocalDateTime.now()), HttpStatus.NOT_FOUND);
+
+    }
 }
