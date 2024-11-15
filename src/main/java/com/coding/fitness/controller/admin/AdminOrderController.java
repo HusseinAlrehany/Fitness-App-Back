@@ -32,5 +32,17 @@ public class AdminOrderController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
+    @PatchMapping("/order/{orderId}/{orderStatus}")
+    public ResponseEntity<?> changeOrderStatus(@PathVariable Long orderId, @PathVariable String orderStatus){
+
+        OrderDTO orderDTO = adminOrderService.changeOrderStatus(orderId, orderStatus);
+
+        if(orderDTO == null){
+            return new ResponseEntity<>("Something went wrong!", HttpStatus.BAD_REQUEST);
+        }
+        return ResponseEntity.ok(orderDTO);
+    }
+
+
 
 }

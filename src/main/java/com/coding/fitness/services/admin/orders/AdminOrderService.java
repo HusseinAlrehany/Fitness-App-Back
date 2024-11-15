@@ -13,4 +13,6 @@ public interface AdminOrderService {
     boolean isOrderUpdateExpired(Order order);
 
     void deleteOrder(Long orderId);
+
+    OrderDTO changeOrderStatus(Long orderId, String orderStatus);
 }

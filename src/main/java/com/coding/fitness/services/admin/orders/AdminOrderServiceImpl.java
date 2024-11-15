@@ -4,10 +4,12 @@ import com.coding.fitness.entity.Coupon;
 import com.coding.fitness.entity.Order;
 import com.coding.fitness.enums.OrderStatus;
 import com.coding.fitness.exceptions.ValidationException;
+import com.coding.fitness.mapper.Mapper;
 import com.coding.fitness.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,36 +17,16 @@ import java.util.stream.Collectors;
 public class AdminOrderServiceImpl implements AdminOrderService {
 
     private final OrderRepository orderRepository;
+
+    private final Mapper mapper;
     @Override
     public List<OrderDTO> findAllOrders() {
        List<Order> orders = Optional.of(orderRepository.findAllByOrderStatusIn(List.of(OrderStatus.PLACED)))
                .filter(ord-> !ord.isEmpty())
-               .orElseThrow(()-> new ValidationException("No Orders Found for That Status"));
+               .orElseThrow(()-> new ValidationException("No Orders Found"));
         return orders.stream()
-                .map(order -> {
-                    OrderDTO orderDTO = new OrderDTO();
-                    orderDTO.setId(order.getId());
-                    orderDTO.setOrderDescription(order.getOrderDescription());
-                    orderDTO.setOrderStatus(order.getOrderStatus());
-                    orderDTO.setAmount(order.getAmount());
-                    orderDTO.setTotalAmount(order.getTotalAmount());
-                    orderDTO.setDate(order.getDate());
-                    orderDTO.setAddress(order.getAddress());
-                    orderDTO.setTrackingId(order.getTrackingId());
-                    orderDTO.setUserName(order.getUser().getName());
-                    orderDTO.setUserId(order.getUser().getId());
-                    //this line is for getting the order
-                    //even if it did not have coupon or coupon is null
-                    //to avoid nullpointerexception
-                    //so if the coupon not null it will go to coupon.getDiscount
-                    //but if it is null it will set to null and retrieved
-                    orderDTO.setDiscount(Optional.ofNullable(order.getCoupon())
-                            .map(Coupon::getDiscount)
-                            .orElse(null));
-                    return orderDTO;
-                })
+                .map(mapper::getOrderDTO)
                 .collect(Collectors.toList());
-
     }
 
     @Override
@@ -55,12 +37,10 @@ public class AdminOrderServiceImpl implements AdminOrderService {
       Optional <Order> order =  Optional.of(orderRepository.findById(orderDTO.getId()))
                 .filter(Optional::isPresent)
                 .orElseThrow(()-> new ValidationException("No Order Found"));
+     Optional.of(order.get())
+             .filter(ord-> !isOrderUpdateExpired(ord))
+             .orElseThrow(()-> new ValidationException("Can not update Order, Max Period for update is 24h"));
 
-    if(isOrderUpdateExpired(order.get())){
-         throw new ValidationException("Can not update Order, Max Period for update is 24h");
-     }
-
-         Coupon coupon = order.get().getCoupon();
          order.get().setOrderStatus(OrderStatus.PLACED);
          order.get().setOrderDescription(orderDTO.getOrderDescription());
          order.get().setDate(new Date());
@@ -68,41 +48,9 @@ public class AdminOrderServiceImpl implements AdminOrderService {
          order.get().setAddress(orderDTO.getAddress());
 
         Order orderDB = orderRepository.save(order.get());
-        OrderDTO orderDTO1 = new OrderDTO();
-        orderDTO1.setId(orderDB.getId());
-        orderDTO1.setOrderDescription(orderDB.getOrderDescription());
-        orderDTO1.setOrderStatus(orderDB.getOrderStatus());
-        orderDTO1.setAmount(orderDB.getAmount());
-        orderDTO1.setTotalAmount(orderDB.getTotalAmount());
-        orderDTO1.setDate(orderDB.getDate());
-        orderDTO1.setAddress(orderDB.getAddress());
-        orderDTO1.setTrackingId(orderDB.getTrackingId());
-        orderDTO1.setUserName(orderDB.getUser().getName());
-        orderDTO1.setUserId(orderDB.getUser().getId());
-        orderDTO1.setDiscount(Optional.ofNullable(orderDB.getCoupon())
-                .map(Coupon::getDiscount)
-                .orElse(null));
-        return orderDTO1;
+
+        return mapper.getOrderDTO(orderDB);
     }
-
-   /* public OrderDTO mapToOrderDTO(Order order){
-
-        return OrderDTO.builder()
-                .id(order.getId())
-                .date(order.getDate())
-                .trackingId(order.getTrackingId())
-                .orderStatus(order.getOrderStatus())
-                .orderDescription(order.getOrderDescription())
-                .address(order.getAddress())
-                .userId(order.getUser().getId())
-                .totalAmount(order.getTotalAmount())
-                .amount(order.getAmount())
-                .userName(order.getUser().getName())
-                .discount(Optional.ofNullable(order.getCoupon())
-                        .map(Coupon::getDiscount)
-                        .orElse(null))
-                .build();
-    }*/
 
     @Override
     public boolean isOrderUpdateExpired(Order order) {
@@ -122,6 +70,34 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 .orElseThrow(()-> new ValidationException("No Order Found"));
 
          orderRepository.deleteById(orderId);
+    }
+
+    @Override
+    public OrderDTO changeOrderStatus(Long orderId, String orderStatus) {
+        Optional.ofNullable(orderId)
+                .filter(id-> id > 0)
+                .orElseThrow(()-> new ValidationException("Invalid order id"));
+
+        String trimmedStatus = Optional.ofNullable(orderStatus)
+                .map(String::trim)
+                .filter(status -> !status.isEmpty())
+                .orElseThrow(() -> new ValidationException("Invalid order status"));
+
+          Order order   = orderRepository.findById(orderId)
+                  .orElseThrow(()-> new ValidationException("No Order Found"));
+
+           Map<String, Consumer<Order>> statusActions = Map.of(
+                "Shipped", ord-> ord.setOrderStatus(OrderStatus.SHIPPED),
+                "Delivered", ord-> ord.setOrderStatus(OrderStatus.DELIVERED));
+
+          Optional.ofNullable(statusActions.get(trimmedStatus))
+                  .ifPresentOrElse(
+                          action-> action.accept(order),
+                          ()-> {throw new ValidationException("Invalid order status Too");}
+                  );
+
+        Order dbOrder = orderRepository.save(order);
+        return mapper.getOrderDTO(dbOrder);
     }
 
     /*@Override
