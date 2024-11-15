@@ -1,6 +1,8 @@
 package com.coding.fitness.controller.admin;
 
+import com.coding.fitness.dtos.FAQDTO;
 import com.coding.fitness.dtos.ProductDTO;
+import com.coding.fitness.services.admin.faq.FAQService;
 import com.coding.fitness.services.admin.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ public class ProductController {
 
 
     private final ProductService productService;
+    private final FAQService faqService;
 
     //using @ModelAttribute to accept multipart files as images
     @PostMapping("/product")
@@ -44,10 +47,21 @@ public class ProductController {
          productService.deleteProduct(productId);
        return ResponseEntity.status(HttpStatus.OK).body(null);
     }
-    @PutMapping("/product")
-    public ResponseEntity<ProductDTO> updateProduct(@ModelAttribute ProductDTO productDTO) {
 
-        return ResponseEntity.ok(productService.updateProduct(productDTO));
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<ProductDTO> findProductById(@PathVariable Long productId){
+        return ResponseEntity.ok(productService.findProductById(productId));
+    }
+    @PutMapping("/product/{productId}")
+    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long productId,
+                                                    @ModelAttribute ProductDTO productDTO) {
+
+        return ResponseEntity.ok(productService.updateProduct(productId ,productDTO));
+    }
+    @PostMapping("/faq/{productId}")
+    public ResponseEntity<FAQDTO> createFAQ(@PathVariable Long productId, @RequestBody FAQDTO faqdto){
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(faqService.createFAQ(productId, faqdto));
     }
 
 }

@@ -81,11 +81,22 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public ProductDTO updateProduct(ProductDTO productDTO) {
-        Optional.ofNullable(productDTO.getId())
+    public ProductDTO findProductById(Long productId) {
+        Optional.ofNullable(productId)
+                .filter(id -> id > 0)
+                .orElseThrow(()-> new ValidationException("Invalid productId"));
+       Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ValidationException("No Product Found"));
+
+        return mapper.getProductDTO(productRepository.findById(productId).get());
+    }
+
+    @Override
+    public ProductDTO updateProduct(Long productId,ProductDTO productDTO) {
+        Optional.ofNullable(productId)
                 .filter(id -> id > 0)
                 .orElseThrow(()-> new ValidationException("Invalid Id"));
-        Product product = productRepository.findById(productDTO.getId())
+        Product product = productRepository.findById(productId)
                 .orElseThrow(()-> new ValidationException("No Product Found"));
         Category category = categoryRepository.findById(productDTO.getCategoryId())
                 .orElseThrow(()-> new ValidationException("No category found"));
@@ -107,4 +118,6 @@ public class ProductServiceImpl implements ProductService{
         Product dbProduct = productRepository.save(product);
         return mapper.getProductDTO(dbProduct);
     }
+
+
 }

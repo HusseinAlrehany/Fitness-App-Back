@@ -83,4 +83,13 @@ public class Mapper {
         return orderDTO;
 
     }
+
+    public FAQDTO getFAQDTO(FAQ faq){
+        FAQDTO faqdto = new FAQDTO();
+        faqdto.setId(faq.getId());
+        faqdto.setQuestion(faq.getQuestion());
+        faqdto.setAnswer(faq.getAnswer());
+        faqdto.setProductId(faq.getProduct().getId());
+        return faqdto;
+    }
 }
