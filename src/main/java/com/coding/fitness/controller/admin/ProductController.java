@@ -2,6 +2,7 @@ package com.coding.fitness.controller.admin;
 
 import com.coding.fitness.dtos.FAQDTO;
 import com.coding.fitness.dtos.ProductDTO;
+import com.coding.fitness.exceptions.ValidationException;
 import com.coding.fitness.services.admin.faq.FAQService;
 import com.coding.fitness.services.admin.product.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,8 @@ public class ProductController {
     @PostMapping("/product")
     public ResponseEntity<ProductDTO> addProduct(@ModelAttribute ProductDTO productDTO) throws IOException {
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(productService.addProduct(productDTO));
+          return  ResponseEntity.status(HttpStatus.CREATED)
+                    .body(productService.addProduct(productDTO));
     }
 
     @GetMapping("/products")

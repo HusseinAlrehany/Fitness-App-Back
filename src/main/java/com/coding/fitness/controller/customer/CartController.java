@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/customer")
 @RequiredArgsConstructor
@@ -64,5 +66,11 @@ public class CartController {
     public ResponseEntity<OrderSummary> applyCoupon(@PathVariable Long userId, @PathVariable String code){
 
         return ResponseEntity.ok(cartService.applyCoupon(userId, code));
+    }
+
+    @GetMapping("/myOrders/{userId}")
+    public ResponseEntity<List<OrderDTO>> getAllMyOrders(@PathVariable Long userId){
+
+        return ResponseEntity.ok(cartService.findAllMyOrders(userId));
     }
 }

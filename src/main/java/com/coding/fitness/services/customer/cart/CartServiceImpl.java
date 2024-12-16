@@ -160,14 +160,14 @@ public class CartServiceImpl implements CartService{
 
         // Get the user's cart items that are not yet part of an order
         List<CartItems> cartItems = cartItemRepository.findByUserIdAndOrderIsNull(placeOrderDTO.getUserId());
+
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("Cart is empty");
+        }
         //findByCode is Optional of coupon(orElse(null))
         //to allow placing order without forcing passing a code for a coupon
         Coupon coupon = couponRepository.findByCode(placeOrderDTO.getCouponCode())
                 .orElse(null);
-        if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
-        }
-
         // Calculate total amount
         Long totalAmount = cartItems.stream()
                 .mapToLong(item -> item.getPrice() * item.getQuantity())
@@ -242,6 +242,13 @@ public class CartServiceImpl implements CartService{
         if(IsCouponExpired(coupon)&& coupon!= null){
             throw new ValidationException("Coupon Is Expired");
         }
+
+        Order order = Optional.ofNullable(orderRepository.findByUserIdAndCouponNotNull(userId))
+                .filter(ord-> ord.getCoupon().getId() != coupon.getId())
+                .stream()
+                .findFirst()
+                .orElseThrow(()-> new ValidationException("This user has a coupon applied before and still valid"));
+
         OrderSummary orderSummary = getOrderSummary(userId);
         if(coupon != null){
             double discountAmount = ((coupon.getDiscount() / 100.0) * orderSummary.getTotalPrice());
@@ -252,6 +259,7 @@ public class CartServiceImpl implements CartService{
         return orderSummary;
     }
 
+
     //should move to cart service impl
     @Override
     public boolean IsCouponExpired(Coupon coupon) {
@@ -261,6 +269,23 @@ public class CartServiceImpl implements CartService{
         }
         return false;
     }
+
+    @Override
+    public List<OrderDTO> findAllMyOrders(Long userId) {
+        Optional.ofNullable(userId)
+                .filter(id-> id > 0)
+                .orElseThrow(()-> new ValidationException("Invalid userId"));
+        List<Order> orders = Optional.of(orderRepository.findByUserIdAndOrderStatusIn(
+                userId, List.of(OrderStatus.PLACED, OrderStatus.DELIVERED, OrderStatus.SHIPPED)))
+                .filter(ord-> !ord.isEmpty())
+                .orElseThrow(()-> new ValidationException("No Orders Found"));
+
+        return orders.stream().map(mapper::getOrderDTO).collect(Collectors.toList());
+    }
+
+
+
+
 
 }
 

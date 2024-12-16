@@ -62,6 +62,10 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductDTO> findAllProductsByName(String name) {
+           Optional.ofNullable(name)
+                   .filter(n-> !n.isBlank())
+                   .orElseThrow(()-> new ValidationException("Invalid product name"));
+
            List<Product> productsList = Optional.of(productRepository.findAllByNameContaining(name))
                    .filter(products -> !products.isEmpty())
                    .orElseThrow(()-> new ValidationException("OOPS! No Products Found"));

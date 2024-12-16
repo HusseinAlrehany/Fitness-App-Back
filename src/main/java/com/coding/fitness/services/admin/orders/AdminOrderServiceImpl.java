@@ -21,7 +21,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final Mapper mapper;
     @Override
     public List<OrderDTO> findAllOrders() {
-       List<Order> orders = Optional.of(orderRepository.findAllByOrderStatusIn(List.of(OrderStatus.PLACED)))
+       List<Order> orders = Optional.of(orderRepository.findAllByOrderStatusIn(List.of(OrderStatus.PLACED, OrderStatus.DELIVERED, OrderStatus.SHIPPED)))
                .filter(ord-> !ord.isEmpty())
                .orElseThrow(()-> new ValidationException("No Orders Found"));
         return orders.stream()
