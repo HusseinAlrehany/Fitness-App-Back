@@ -26,4 +26,6 @@ public class ProductDTO {
     //then return it as byte array
     private MultipartFile img;
 
+    private Long quantity;
+
 }

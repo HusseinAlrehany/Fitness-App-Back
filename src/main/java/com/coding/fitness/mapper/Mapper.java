@@ -4,6 +4,8 @@ import com.coding.fitness.dtos.*;
 import com.coding.fitness.entity.*;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+
 @Service
 public class Mapper {
 
@@ -92,4 +94,18 @@ public class Mapper {
         faqdto.setProductId(faq.getProduct().getId());
         return faqdto;
     }
+
+    public ReviewDTO getReviewDTO(Review review){
+        ReviewDTO reviewDTO = new ReviewDTO();
+        reviewDTO.setId(review.getId());
+        reviewDTO.setDescription(review.getDescription());
+        reviewDTO.setRating(review.getRating());
+        reviewDTO.setReturnedImg(review.getImg());
+        reviewDTO.setProductId(review.getProduct().getId());
+        reviewDTO.setUserId(review.getUser().getId());
+        reviewDTO.setUserName(review.getUser().getName());
+
+        return reviewDTO;
+    }
+
 }

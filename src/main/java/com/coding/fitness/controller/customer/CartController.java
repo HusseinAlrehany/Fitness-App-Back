@@ -69,8 +69,8 @@ public class CartController {
     }
 
     @GetMapping("/myOrders/{userId}")
-    public ResponseEntity<List<OrderDTO>> getAllMyOrders(@PathVariable Long userId){
+    public ResponseEntity<List<OrderDTO>> getAllMyPlacedOrders(@PathVariable Long userId){
 
-        return ResponseEntity.ok(cartService.findAllMyOrders(userId));
+        return ResponseEntity.ok(cartService.findAllMyPlacedOrders(userId));
     }
 }

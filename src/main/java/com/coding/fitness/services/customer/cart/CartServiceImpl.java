@@ -271,7 +271,7 @@ public class CartServiceImpl implements CartService{
     }
 
     @Override
-    public List<OrderDTO> findAllMyOrders(Long userId) {
+    public List<OrderDTO> findAllMyPlacedOrders(Long userId) {
         Optional.ofNullable(userId)
                 .filter(id-> id > 0)
                 .orElseThrow(()-> new ValidationException("Invalid userId"));

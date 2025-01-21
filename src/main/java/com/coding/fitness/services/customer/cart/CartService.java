@@ -29,5 +29,5 @@ public interface CartService {
     boolean IsCouponExpired(Coupon coupon);
     OrderSummary applyCoupon(Long userId, String code);
 
-    List<OrderDTO> findAllMyOrders(Long userId);
+    List<OrderDTO> findAllMyPlacedOrders(Long userId);
 }

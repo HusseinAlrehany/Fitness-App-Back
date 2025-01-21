@@ -108,7 +108,7 @@ public class ProductServiceImpl implements ProductService{
                  .filter(img-> !img.isEmpty())
                  .orElseThrow(()-> new ValidationException("No Img Found"));
 
-        product.setId(productDTO.getId());
+        product.setId(productId);
         product.setName(productDTO.getName());
         product.setPrice(productDTO.getPrice());
         product.setDescription(productDTO.getDescription());

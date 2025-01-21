@@ -51,13 +51,14 @@ public class ProductController {
 
     @GetMapping("/product/{productId}")
     public ResponseEntity<ProductDTO> findProductById(@PathVariable Long productId){
-        return ResponseEntity.ok(productService.findProductById(productId));
+        ProductDTO productDTO = productService.findProductById(productId);
+        return productDTO != null ? ResponseEntity.ok(productDTO) : ResponseEntity.notFound().build();
     }
     @PutMapping("/product/{productId}")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long productId,
                                                     @ModelAttribute ProductDTO productDTO) {
-
-        return ResponseEntity.ok(productService.updateProduct(productId ,productDTO));
+          ProductDTO productDTO1 = productService.updateProduct(productId ,productDTO);
+        return productDTO1 != null ? ResponseEntity.ok(productDTO1) : ResponseEntity.notFound().build();
     }
     @PostMapping("/faq/{productId}")
     public ResponseEntity<FAQDTO> createFAQ(@PathVariable Long productId, @RequestBody FAQDTO faqdto){
